@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pay Zones & Relocations Calculator</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f5f6fa;
+      min-height: 100vh;
+      padding: 32px 16px;
+      color: #1a1a2e;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      max-width: 680px;
+      margin: 0 auto;
+      overflow: hidden;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.10);
+    }
+
+    .header {
+      background: #5bbdd4;
+      padding: 20px 28px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: white;
+      letter-spacing: 0.01em;
+    }
+
+    .header .emoji { font-size: 1.4rem; }
+
+    .body { padding: 28px; }
+
+    .section-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 6px;
+    }
+
+    .section-desc {
+      font-size: 0.88rem;
+      color: #555;
+      margin-bottom: 24px;
+    }
+
+    /* Reference table */
+    .ref-table-wrap {
+      overflow-x: auto;
+      margin-bottom: 28px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.87rem;
+    }
+
+    thead th {
+      background: #eaf6fb;
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 700;
+      color: #333;
+      border-bottom: 2px solid #d0ecf5;
+    }
+
+    tbody td {
+      padding: 9px 14px;
+      border-bottom: 1px solid #f0f0f0;
+      color: #444;
+    }
+
+    tbody tr:last-child td { border-bottom: none; }
+
+    .pos { color: #1a8c4e; font-weight: 600; }
+    .neg { color: #c0392b; font-weight: 600; }
+    .dash { color: #aaa; }
+
+    /* Calculator section */
+    .calc-section {
+      background: #f9fbfd;
+      border: 1px solid #e2edf5;
+      border-radius: 10px;
+      padding: 22px 22px 26px;
+    }
+
+    .calc-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 18px;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      flex: 1;
+      min-width: 150px;
+    }
+
+    label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    select, input[type="number"] {
+      padding: 9px 12px;
+      border: 1.5px solid #cdd8e3;
+      border-radius: 7px;
+      font-size: 0.95rem;
+      color: #1a1a2e;
+      background: white;
+      outline: none;
+      transition: border-color 0.2s;
+      width: 100%;
+    }
+
+    select:focus, input[type="number"]:focus {
+      border-color: #5bbdd4;
+    }
+
+    .pay-type-toggle {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .toggle-btn {
+      flex: 1;
+      padding: 8px;
+      border: 1.5px solid #cdd8e3;
+      border-radius: 7px;
+      background: white;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #666;
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+
+    .toggle-btn.active {
+      background: #5bbdd4;
+      border-color: #5bbdd4;
+      color: white;
+    }
+
+    .calc-btn {
+      width: 100%;
+      margin-top: 6px;
+      padding: 11px;
+      background: #5bbdd4;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .calc-btn:hover { background: #44a8bf; }
+
+    /* Result */
+    .result-box {
+      display: none;
+      margin-top: 20px;
+      background: white;
+      border: 1.5px solid #e2edf5;
+      border-radius: 10px;
+      padding: 20px 22px;
+    }
+
+    .result-box.show { display: block; }
+
+    .result-box.positive { border-color: #a8dfc8; background: #f2fbf6; }
+    .result-box.negative { border-color: #f5c0b8; background: #fdf4f3; }
+
+    .result-header {
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #888;
+      margin-bottom: 12px;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .result-item label {
+      font-size: 0.78rem;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      display: block;
+      margin-bottom: 3px;
+    }
+
+    .result-item .value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #1a1a2e;
+    }
+
+    .result-item .value.up { color: #1a8c4e; }
+    .result-item .value.down { color: #c0392b; }
+
+    .result-item .sub {
+      font-size: 0.8rem;
+      color: #999;
+      margin-top: 2px;
+    }
+
+    .same-zone-msg {
+      display: none;
+      margin-top: 14px;
+      padding: 12px 16px;
+      background: #fff8e1;
+      border: 1px solid #ffe082;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      color: #7a6000;
+      text-align: center;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #eee;
+      margin: 24px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <span class="emoji">🗺️</span>
+      <h1>Pay Zones &amp; Relocations</h1>
+    </div>
+    <div class="body">
+
+      <p class="section-title">Pay Zone Movement Calculator</p>
+      <p class="section-desc">Use this table to calculate your salary adjustment when moving between US pay zones:</p>
+
+      <!-- Reference Table -->
+      <div class="ref-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>From</th>
+              <th>To Guava</th>
+              <th>To Salt</th>
+              <th>To Kale</th>
+              <th>To Ginger</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Guava</strong></td>
+              <td class="dash">-</td>
+              <td class="neg">-7.5%</td>
+              <td class="neg">-15%</td>
+              <td class="neg">-20%</td>
+            </tr>
+            <tr>
+              <td><strong>Salt</strong></td>
+              <td class="pos">+8%</td>
+              <td class="dash">-</td>
+              <td class="neg">-8%</td>
+              <td class="neg">-14%</td>
+            </tr>
+            <tr>
+              <td><strong>Kale</strong></td>
+              <td class="pos">+17.5%</td>
+              <td class="pos">+8.5%</td>
+              <td class="dash">-</td>
+              <td class="neg">-6%</td>
+            </tr>
+            <tr>
+              <td><strong>Ginger</strong></td>
+              <td class="pos">+25%</td>
+              <td class="pos">+16%</td>
+              <td class="pos">+6%</td>
+              <td class="dash">-</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <hr class="divider" />
+
+      <!-- Interactive Calculator -->
+      <div class="calc-section">
+        <p class="calc-title">🧮 Calculate Pay Adjustment</p>
+
+        <div class="pay-type-toggle">
+          <button class="toggle-btn active" id="btn-salary" onclick="setPayType('salary')">Annual Salary</button>
+          <button class="toggle-btn" id="btn-hourly" onclick="setPayType('hourly')">Hourly Rate</button>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>From Pay Zone</label>
+            <select id="fromZone">
+              <option value="">Select zone...</option>
+              <option value="Guava">Guava</option>
+              <option value="Salt">Salt</option>
+              <option value="Kale">Kale</option>
+              <option value="Ginger">Ginger</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>To Pay Zone</label>
+            <select id="toZone">
+              <option value="">Select zone...</option>
+              <option value="Guava">Guava</option>
+              <option value="Salt">Salt</option>
+              <option value="Kale">Kale</option>
+              <option value="Ginger">Ginger</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label id="pay-label">Current Annual Salary ($)</label>
+            <input type="number" id="currentPay" placeholder="e.g. 100000" min="0" />
+          </div>
+        </div>
+
+        <button class="calc-btn" onclick="calculate()">Calculate Adjustment</button>
+
+        <div class="same-zone-msg" id="sameZoneMsg">
+          ⚠️ The selected zones are the same — no pay adjustment applies.
+        </div>
+
+        <div class="result-box" id="resultBox">
+          <div class="result-header">Calculation Results</div>
+          <div class="result-grid">
+            <div class="result-item">
+              <label id="res-current-label">Current Salary</label>
+              <div class="value" id="res-current"></div>
+            </div>
+            <div class="result-item">
+              <label id="res-new-label">New Salary</label>
+              <div class="value" id="res-new"></div>
+            </div>
+            <div class="result-item">
+              <label>Zone Change</label>
+              <div class="value" id="res-zones"></div>
+            </div>
+            <div class="result-item">
+              <label>Pay Change</label>
+              <div class="value" id="res-pct"></div>
+              <div class="sub" id="res-diff"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const matrix = {
+      Guava: { Guava: null, Salt: -7.5, Kale: -15, Ginger: -20 },
+      Salt:  { Guava: 8,    Salt: null, Kale: -8,  Ginger: -14 },
+      Kale:  { Guava: 17.5, Salt: 8.5,  Kale: null, Ginger: -6 },
+      Ginger:{ Guava: 25,   Salt: 16,   Kale: 6,    Ginger: null }
+    };
+
+    let payType = 'salary';
+
+    function setPayType(type) {
+      payType = type;
+      document.getElementById('btn-salary').classList.toggle('active', type === 'salary');
+      document.getElementById('btn-hourly').classList.toggle('active', type === 'hourly');
+      document.getElementById('pay-label').textContent =
+        type === 'salary' ? 'Current Annual Salary ($)' : 'Current Hourly Rate ($)';
+      document.getElementById('currentPay').placeholder =
+        type === 'salary' ? 'e.g. 100000' : 'e.g. 45.00';
+      // Reset results
+      document.getElementById('resultBox').classList.remove('show', 'positive', 'negative');
+      document.getElementById('sameZoneMsg').style.display = 'none';
+    }
+
+    function fmt(val) {
+      return '$' + val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function calculate() {
+      const from = document.getElementById('fromZone').value;
+      const to   = document.getElementById('toZone').value;
+      const pay  = parseFloat(document.getElementById('currentPay').value);
+
+      const resultBox    = document.getElementById('resultBox');
+      const sameZoneMsg  = document.getElementById('sameZoneMsg');
+      resultBox.classList.remove('show', 'positive', 'negative');
+      sameZoneMsg.style.display = 'none';
+
+      if (!from || !to) { alert('Please select both a From and To pay zone.'); return; }
+      if (isNaN(pay) || pay <= 0) { alert('Please enter a valid current pay amount.'); return; }
+
+      if (from === to) {
+        sameZoneMsg.style.display = 'block';
+        return;
+      }
+
+      const pct = matrix[from][to];
+      const newPay = pay * (1 + pct / 100);
+      const diff   = newPay - pay;
+      const isUp   = pct > 0;
+
+      const label = payType === 'salary' ? 'Annual Salary' : 'Hourly Rate';
+
+      document.getElementById('res-current-label').textContent = 'Current ' + label;
+      document.getElementById('res-new-label').textContent     = 'New ' + label;
+
+      document.getElementById('res-current').textContent = fmt(pay);
+      document.getElementById('res-new').textContent     = fmt(newPay);
+      document.getElementById('res-new').className       = 'value ' + (isUp ? 'up' : 'down');
+
+      document.getElementById('res-zones').textContent = from + ' → ' + to;
+
+      document.getElementById('res-pct').textContent  = (isUp ? '+' : '') + pct + '%';
+      document.getElementById('res-pct').className    = 'value ' + (isUp ? 'up' : 'down');
+      document.getElementById('res-diff').textContent =
+        (isUp ? '+' : '') + fmt(diff) + (payType === 'salary' ? '/yr' : '/hr');
+
+      resultBox.classList.add('show', isUp ? 'positive' : 'negative');
+    }
+  </script>
+</body>
+</html>
